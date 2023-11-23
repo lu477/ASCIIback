@@ -1,39 +1,73 @@
-from flask import Flask, render_template, request
-from video_to_ascii import video_engine  # Adjust the import based on your module structure
-from flask_cors import CORS
+from flask import Flask, render_template, request, send_file
+import cv2
+import numpy as np
+import os
 
 app = Flask(__name__)
 
-CORS(app)
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 @app.route('/')
 def index():
-    return render_template('index_video.html')
+    return render_template('index.html')
 
-@app.route('/upload', methods=['POST'])
-def upload():
+@app.route('/convert', methods=['POST'])
+def convert():
     if 'file' not in request.files:
-        return render_template('index_video.html', error='No file part')
+        return "No file part"
 
     file = request.files['file']
 
     if file.filename == '':
-        return render_template('index_video.html', error='No selected file')
- 
-    # Save the uploaded file
-    video_path = 'static/uploads/' + file.filename
+        return "No selected file"
+
+    # Save the uploaded video
+    video_path = os.path.join(app.config['UPLOAD_FOLDER'], 'input_video.mp4')
     file.save(video_path)
 
-    # Call the function to convert video to ASCII
-    ascii_output = convert_video_to_ascii(video_path)
+    # Perform video to ASCII conversion
+    ascii_video_path = convert_video_to_ascii(video_path)
 
-    return render_template('result_video.html', video_path=video_path, ascii_output=ascii_output)
+    # Return the converted video and download link
+    return render_template('index.html', download_link=ascii_video_path)
 
 def convert_video_to_ascii(video_path):
-    # Use the appropriate class or function for video to ASCII conversion
-    video_engine = video_engine()  # Instantiate the class or use the function
-    ascii_output = video_engine.convert_to_ascii(video_path)  # Adjust the method name
-    return ascii_output
+    cap = cv2.VideoCapture(video_path)
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    ascii_video_path = "uploads/ascii_video.mp4"
+    out = cv2.VideoWriter(ascii_video_path, fourcc, fps, (width, height))
+
+    while cap.isOpened():
+        ret, frame = cap.read()
+
+        if not ret:
+            break
+
+        # Convert the frame to grayscale
+        gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+
+        # Resize the frame to a smaller size for better ASCII representation
+        resized_frame = cv2.resize(gray_frame, (80, 60))
+
+        # Convert each pixel intensity to ASCII character
+        ascii_frame = np.zeros_like(resized_frame, dtype=np.dtype('U1'))
+        ascii_frame[:,:] = ' '
+        ascii_frame[resized_frame < 50] = '@'
+        ascii_frame[resized_frame > 200] = '.'
+
+        # Write the ASCII frame to the output video
+        out.write(cv2.cvtColor(cv2.resize(cv2.putText(frame.copy(), ''.join(ascii_frame.flatten()), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2), (width, height)), cv2.COLOR_BGR2RGB))
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
+
+    return ascii_video_path
 
 if __name__ == '__main__':
     app.run(debug=True)
