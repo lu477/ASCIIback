@@ -1,7 +1,8 @@
-from flask import Flask, render_template, request, send_file
+from flask import Flask, render_template, request, send_file, jsonify
 import cv2
 import numpy as np
 import os
+import base64
 
 app = Flask(__name__)
 
@@ -15,12 +16,12 @@ def index():
 @app.route('/convert', methods=['POST'])
 def convert():
     if 'file' not in request.files:
-        return "No file part"
+        return jsonify({'error': 'No file part'})
 
     file = request.files['file']
 
     if file.filename == '':
-        return "No selected file"
+        return jsonify({'error': 'No selected file'})
 
     # Save the uploaded video
     video_path = os.path.join(app.config['UPLOAD_FOLDER'], 'input_video.mp4')
@@ -29,8 +30,11 @@ def convert():
     # Perform video to ASCII conversion
     ascii_video_path = convert_video_to_ascii(video_path)
 
-    # Return the converted video and download link
-    return render_template('index.html', download_link=ascii_video_path)
+    # Encode the ASCII video to base64
+    encoded_video = encode_video_to_base64(ascii_video_path)
+
+    # Return the base64 encoded video
+    return jsonify({'video': encoded_video})
 
 def convert_video_to_ascii(video_path):
     cap = cv2.VideoCapture(video_path)
@@ -68,6 +72,11 @@ def convert_video_to_ascii(video_path):
     cv2.destroyAllWindows()
 
     return ascii_video_path
+
+def encode_video_to_base64(video_path):
+    with open(video_path, 'rb') as video_file:
+        encoded_video = base64.b64encode(video_file.read()).decode('utf-8')
+    return encoded_video
 
 if __name__ == '__main__':
     app.run(debug=True)
