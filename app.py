@@ -58,11 +58,16 @@ def convert_video_to_ascii(video_path):
         # Resize the frame to a smaller size for better ASCII representation
         resized_frame = cv2.resize(gray_frame, (80, 60))
 
-        # Convert each pixel intensity to ASCII character
+        # Map pixel intensity to ASCII characters based on predefined intensity range
         ascii_frame = np.zeros_like(resized_frame, dtype=np.dtype('U1'))
         ascii_frame[:,:] = ' '
-        ascii_frame[resized_frame < 50] = '@'
-        ascii_frame[resized_frame > 200] = '.'
+
+        intensity_range = [0, 50, 100, 150, 200, 255]
+        ascii_characters = ['@', '#', '8', '&', 'o', ':', '*', '.', ' ']
+
+        for i in range(len(intensity_range) - 1):
+            mask = (resized_frame >= intensity_range[i]) & (resized_frame <= intensity_range[i + 1])
+            ascii_frame[mask] = ascii_characters[i]
 
         # Write the ASCII frame to the output video
         out.write(cv2.cvtColor(cv2.resize(cv2.putText(frame.copy(), ''.join(ascii_frame.flatten()), (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2), (width, height)), cv2.COLOR_BGR2RGB))
@@ -72,6 +77,7 @@ def convert_video_to_ascii(video_path):
     cv2.destroyAllWindows()
 
     return ascii_video_path
+    
 
 def encode_video_to_base64(video_path):
     with open(video_path, 'rb') as video_file:
