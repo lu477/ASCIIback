@@ -38,7 +38,6 @@ def asciify():
     response = Response(generate_frames("uploads/output.mp4"), content_type='video/mp4')
     response.headers['Content-Disposition'] = 'inline; filename=output.mp4'
 
-    
     # # Encode the ASCII video to base64
     # encoded_video = encode_video_to_base64("uploads/output.mp4")
 
