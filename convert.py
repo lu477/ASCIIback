@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+'''
+Alex Eidt
+
+Converts videos/images into ASCII video/images in various formats.
+'''
+
 import os
 import argparse
 import imageio
@@ -200,11 +207,10 @@ def parse_args():
     parser.add_argument('-m', '--monochrome', help='Color to use for Monochromatic characters in "R,G,B" format.')
     parser.add_argument('-c', '--clip', help='Clip characters to not go outside of image bounds.', action='store_false')
     parser.add_argument('-font', '--font', help='Font to use.', type=str, default='cour.ttf')
-    parser.add_argument('-a', '--audio', help='Add audio from the input file to the output file.', action='store_true', default=True)
+    parser.add_argument('-a', '--audio', help='Add audio from the input file to the output file.', action='store_true')
     parser.add_argument('-q', '--quality', help='Quality of the output video. (0-10), 0 worst, 10 best.', type=int, default=10)
 
     return parser.parse_args()
-
 
 def convert_ascii(args, filename, output, chars, monochrome):
     try:
