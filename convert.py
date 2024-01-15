@@ -208,7 +208,7 @@ def parse_args():
     parser.add_argument('-c', '--clip', help='Clip characters to not go outside of image bounds.', action='store_false')
     parser.add_argument('-font', '--font', help='Font to use.', type=str, default='cour.ttf')
     parser.add_argument('-a', '--audio', help='Add audio from the input file to the output file.', action='store_true')
-    parser.add_argument('-q', '--quality', help='Quality of the output video. (0-10), 0 worst, 10 best.', type=int, default=8)
+    parser.add_argument('-q', '--quality', help='Quality of the output video. (0-10), 0 worst, 10 best.', type=int, default=10)
 
     return parser.parse_args()
 
